@@ -1,0 +1,24 @@
+#! /bin/sh
+#
+# Pull mirrored repositories from a DragonFly BSD mirror.
+# Make sure there is no overlap in the calls to this script
+# by using for example lockf(1)
+#
+
+mirrorhost={{ mirror_dfly_masterhost }}
+tmpfile=$(mktemp /tmp/XXXXX)
+rsync rsync://${mirrorhost} | cut -w -f1 > ${tmpfile}
+
+[ $? -ne 0 ] && exit 1
+
+while read -r repo
+do
+        rsync -av --delete ${mirrorhost}::${repo} /archive/${repo} \
+                >> /var/log/mirrorlog/${repo}.log 2>&1
+        if [ $? -ne 0 ]; then
+                echo Failed to update ${mirrorhost}::${repo} \
+                        >> /var/log/mirrorlog/${repo}.log 2>&1
+        fi
+done < ${tmpfile}
+
+rm -f ${tmpfile}

@@ -1,0 +1,157 @@
+---
+# file: roles/mirror/tasks/main.yml
+
+- name: required packages
+  package:
+    name={{item}}
+    state=present
+  with_items:
+    - rsync
+    - nginx
+    - visitors
+
+- name: create user 'mirror'
+  user:
+    name: "{{ mirror_dfly_user }}"
+    uid: 9001
+    shell: /bin/tcsh
+    createhome: yes
+    comment: Mirror user
+    state: present
+
+- name: create group 'mirror'
+  group:
+    name: "{{ mirror_dfly_group }}"
+    gid: 9001
+    state: present
+
+- name: install sync script
+  template:
+    src: rsync_mirror.sh.j2
+    dest: "/home/{{ mirror_dfly_user }}/bin/rsync_mirror.sh"
+    owner: "{{ mirror_dfly_user }}"
+    group: "{{ mirror_dfly_group }}"
+    mode: 0755
+  tags: script
+
+- name: mirroring logs directory
+  file:
+    path: /var/log/mirrorlog
+    owner: "{{ mirror_dfly_user }}"
+    group: "{{ mirror_dfly_group }}"
+    state: directory
+    recurse: yes
+
+- name: gather source datasets
+  command: "rsync rsync://{{ mirror_dfly_masterhost}}"
+  register: rsync_datasets
+  tags: targetdir
+
+- name: webreports directory
+  file:
+    path: "/archive/webreports"
+    owner: mirror
+    group: mirror
+    state: directory
+    recurse: yes
+  tags: targetdir
+
+# This takes some time since it checks every file permission under
+# the specified directories
+- name: target directories creation and permissions
+  file:
+    path: "{{ mirror_dfly_destdir }}/{{ item.split()[0].strip() }}"
+    owner: mirror
+    group: mirror
+    state: directory
+    recurse: yes
+  with_items: "{{ rsync_datasets.stdout_lines }}"
+  tags: targetdir
+
+- name: stat certificate files
+  vars:
+    certlist:
+      - /usr/local/etc/nginx/certs/chained.pem
+      - /usr/local/etc/nginx/certs/server.key
+      - /usr/local/etc/nginx/certs/dhparam.pem
+  stat:
+    path: "{{ item }}"
+  with_items: "{{ certlist }}"
+  register: "r"
+  tags: webserver
+
+- name: Adjust index.html
+  template:
+    src: index.html.j2
+    dest: /usr/local/www/nginx-dist/index.html
+    owner: root
+    group: wheel
+    mode: 0644
+#    validate: /usr/local/bin/nginx -t -c %s
+  tags: webcontent
+
+- name: Copy stylesheets and images
+  vars:
+    tocopy:
+      - css
+      - img
+  synchronize:
+    src: "{{ item }}"
+    dest: /usr/local/www/nginx-dist/
+  with_items: "{{ tocopy }}"
+  tags: webcontent
+
+#
+# XXX This makes the playbook to stop if the certificates are not in place.
+# Maybe only fail for .dragonflybsd.org hosts?
+#
+- name: verify certificate files are in place
+  fail:
+    msg: "{{ item._ansible_item_label }} is NOT in place"
+  when: not item.stat.exists
+  with_items: "{{ r.results }}"
+  loop_control:
+    label: "{{ item._ansible_item_label }} is in place"
+  tags: webserver
+
+- name: newsyslog service
+  service:
+    name: newsyslog
+    state: started
+    enabled: yes
+
+- name: nginx service
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+  tags: webserver
+
+- name: nginx.conf
+  template:
+    src: nginx.conf.j2
+    dest: /usr/local/etc/nginx/nginx.conf
+    owner: root
+    group: wheel
+    mode: 0640
+#    validate: /usr/local/bin/nginx -t -c %s
+  notify: restart nginx
+  tags: webserver
+
+- name: Cron entry for the mirroring script
+  cron:
+    name: "mirror sync script"
+    user: "{{ mirror_dfly_user}}"
+    minute: "1"
+    hour: "*"
+    job: "/usr/bin/lockf -kst 0 /tmp/.mirror /home/{{ mirror_dfly_user}}/bin/rsync_mirror.sh"
+  tags: cronjob
+
+- name: Cron for visitors stats
+  cron:
+    name: "visitors stats update"
+    user: "{{ mirror_dfly_user}}"
+    minute: "05"
+    hour: "*"
+    job: "/usr/bin/lockf -kst 0 /tmp/.visitors visitors -A -m 30 /var/log/nginx/access.log -o html > /archive/webreports/index.html"
+  tags: cronjob

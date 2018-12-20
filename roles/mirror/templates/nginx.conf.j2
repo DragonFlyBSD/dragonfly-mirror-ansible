@@ -1,0 +1,117 @@
+
+#user  nobody;
+worker_processes  1;
+
+# This default error log path is compiled-in to make sure configuration parsing
+# errors are logged somewhere, especially during unattended boot when stderr
+# isn't normally logged anywhere. This path will be touched on every nginx
+# start regardless of error log location configured here. See
+# https://trac.nginx.org/nginx/ticket/147 for more info. 
+#
+#error_log  /var/log/nginx/error.log;
+#
+
+#pid        logs/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    #                  '$status $body_bytes_sent "$http_referer" '
+    #                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+    #access_log  logs/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    # compression settings
+    gzip  on;
+    gzip_http_version 1.0;
+    gzip_comp_level 6;
+    gzip_proxied any;
+    gzip_min_length  1100;
+    gzip_buffers 16 8k;
+    gzip_types text/plain text/css application/x-javascript text/xml application/xml application/xml+rss\ text/javascript image/gif image/jpeg image/png application/json;
+
+    server {
+        listen       80;
+        server_name  {{ ansible_nodename }};
+
+        #charset koi8-r;
+
+        #access_log  logs/host.access.log  main;
+
+        location / {
+            root   /usr/local/www/nginx-dist;
+            index  index.html index.htm;
+	    autoindex on;
+        }
+
+        # redirect server error pages to the static page /50x.html
+        #
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   /usr/local/www/nginx-dist;
+        }
+    }
+
+    # HTTPS server
+    #
+    server {
+        listen       443 ssl;
+        server_name  {{ ansible_nodename }};
+
+        # add Strict-Transport-Security to prevent man in the middle attacks 
+        add_header Strict-Transport-Security "max-age=31536000";
+
+        ssl on;
+	#
+	# Please note that the certificates and keys are not publicly available.
+	# Contact us via an issue in Github and we'll get in touch.
+	ssl_certificate      /usr/local/etc/nginx/certs/chained.pem;
+        ssl_certificate_key  /usr/local/etc/nginx/certs/server.key;
+        ssl_dhparam          /usr/local/etc/nginx/certs/dhparam.pem;
+        ssl_session_timeout  10m;
+
+        ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+        ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+        ssl_prefer_server_ciphers   on;
+
+        location / {
+            root   /usr/local/www/nginx-dist;
+            index  index.html index.htm;
+        }
+
+	location /dports/ {
+            alias  /archive/dports/;
+            autoindex on;
+        }
+
+	location /iso-images/ {
+            alias  /archive/iso-images/;
+            autoindex on;
+        }
+
+	location /snapshots/ {
+            alias  /archive/snapshots/;
+            autoindex on;
+        }
+
+	location /webreports/ {
+            alias  /archive/webreports/;
+            index  index.html index.htm;
+        }
+
+    }
+}

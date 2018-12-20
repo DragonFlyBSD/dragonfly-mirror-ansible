@@ -1,0 +1,122 @@
+/*
+ * This code is derived from software contributed to The DragonFly Project
+ * by Hiten Pandya <hmp@backplane.com>  and Justin Sherrill 
+ * <justin@shiningsilence.com>
+ *
+ * Some parts of #Header, #Content, and #Menu come from bluerobot.com's 
+ * two-column left menu layout: http://www.bluerobot.com/web/layouts/
+ *
+ * DragonFly WWW Site: http://www.dragonflybsd.org/
+ *
+ * $DragonFly: site/data/stylesheet.css,v 1.24 2006/12/01 17:51:44 justin Exp $
+ *
+ */
+
+/* overrides of existing tags */
+
+PRE,CODE,TT {
+   font-size: 1.1em;
+}
+
+body {
+   font-size: 1em;
+   font-family: sans-serif;
+   background-color: #ffffff;
+   margin-top: 0;
+   margin-left: 0;
+}
+
+H1 {
+   font-size : 124%;
+   color: #803E3C;
+}
+
+H2 {
+   font-size : 112%;
+   color: #703E3C;
+}
+
+H3 {
+   font-size : 100%;
+   color: #703E3C;
+}
+
+B  {
+   font-weight: bold;
+}
+
+TH {
+   font-weight: bold;
+}
+
+/*
+ * Markup for mailing list pages
+ *
+ */
+
+.mlcolumn {
+   font-weight: 600;
+   font-size : 125%;
+   text-decoration : underline;
+}
+
+.mlsubject {
+   font-weight: 600;
+   vertical-align: top;
+}
+
+.mlfirstsubject {
+   font-weight: 600;
+   vertical-align: top;
+   background-color: #DDDDDD;
+}
+
+.mlindentsubject {
+   font-weight: 600;
+   vertical-align: top;
+   background-color: #EEEEEE;
+   text-indent: 3em;
+}
+
+.mlfrom {
+   vertical-align: top;
+   white-space: nowrap;
+}
+
+.mldate {
+   font-style: italic;
+   white-space: nowrap;
+   vertical-align: top;
+}
+
+.mlbody {
+   font-size: 1em;
+   font-family: sans-serif;
+   background-color: #ffffff;
+   margin: 2em 3em 0em 3em;
+}
+
+/* used everywhere */
+a:link {color:#506545;}
+a:visited {color:#91AA70;}
+a:hover { color: #6B813D; }
+
+/* for application to the header image */
+
+.headerimage {
+    border-width: 0px;
+}
+
+/* layout elements for sub sites 
+ * this should mirror #Header as much as possible
+ */
+div.remoteheader {
+    margin: 10px 0 10px 0;
+    padding: 0 0 0 20px;
+    line-height: 11px;
+    height: 92px;
+    vertical-align: text-bottom;
+    overflow: visible;
+    z-index: 2;
+}
+

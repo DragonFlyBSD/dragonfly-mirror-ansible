@@ -1,0 +1,6 @@
+---
+# file: allhosts.yml
+
+- hosts: all
+  roles:
+    - mirror

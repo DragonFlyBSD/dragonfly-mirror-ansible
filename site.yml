@@ -1,0 +1,5 @@
+---
+# Main site file - site.yml
+
+- import_playbook: mirror.yml
+

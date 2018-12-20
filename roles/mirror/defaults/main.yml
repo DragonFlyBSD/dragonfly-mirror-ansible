@@ -1,0 +1,7 @@
+---
+# file: roles/mirror/defaults/main.yml
+
+mirror_dfly_destdir: /archive
+mirror_dfly_masterhost: mirror-master.dragonflybsd.org
+mirror_dfly_user: mirror
+mirror_dfly_group: mirror
