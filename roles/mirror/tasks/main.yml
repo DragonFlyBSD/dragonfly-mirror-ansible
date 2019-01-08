@@ -6,6 +6,7 @@
     name={{item}}
     state=present
   with_items:
+    - git
     - rsync
     - nginx
     - visitors
@@ -45,7 +46,7 @@
 - name: gather source datasets
   command: "rsync rsync://{{ mirror_dfly_masterhost}}"
   register: rsync_datasets
-  tags: targetdir
+  tags: targetdir,rsyncd
 
 - name: webreports directory
   file:
@@ -155,3 +156,20 @@
     hour: "*"
     job: "/usr/bin/lockf -kst 0 /tmp/.visitors visitors -A -m 30 /var/log/nginx/access.log -o html > /archive/webreports/index.html"
   tags: cronjob
+
+- name: rsyncd.conf
+  template:
+    src: rsyncd.conf.j2
+    dest: /usr/local/etc/rsync/rsyncd.conf
+    owner: root
+    group: wheel
+    mode: 0640
+  tags: rsyncd
+  notify: restart rsyncd
+
+- name: rsyncd service
+  service:
+    name: rsyncd
+    state: started
+    enabled: yes
+  tags: rsyncd

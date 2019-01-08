@@ -1,0 +1,20 @@
+# Set this if you want to stop rsync daemon with rc.d scripts
+pid file = /var/run/rsyncd.pid
+
+uid = nobody
+gid = nobody
+use chroot = no
+max connections = 10
+syslog facility = local5
+log file = /var/log/rsync.log
+
+{% if rsync_datasets is defined and rsync_datasets.stdout_lines %}
+{% for dataset in rsync_datasets.stdout_lines %}
+
+[{{ dataset.split()[0].strip() }}]
+    comment = {{ dataset.split()[1].strip() }}
+    path = /archive/{{ dataset.split()[0].strip() }}
+    read only = yes
+    list = yes
+{% endfor %}
+{% endif %}
