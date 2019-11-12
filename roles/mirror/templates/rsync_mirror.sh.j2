@@ -5,7 +5,7 @@
 # by using for example lockf(1)
 #
 
-mirrorhost={{ mirror_dfly_masterhost }}
+mirrorhost={{ mirror.masterhost }}
 tmpfile=$(mktemp /tmp/XXXXX)
 rsync rsync://${mirrorhost} | cut -w -f1 > ${tmpfile}
 

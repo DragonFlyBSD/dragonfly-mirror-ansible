@@ -1,7 +1,17 @@
+# -*- mode: yaml; -*-
+
 ---
 # file: roles/mirror/defaults/main.yml
 
-mirror_dfly_destdir: /archive
-mirror_dfly_masterhost: mirror-master.dragonflybsd.org
-mirror_dfly_user: mirror
-mirror_dfly_group: mirror
+mirror:
+    # master mirror host name
+    masterhost: mirror-master.dragonflybsd.org
+
+    # base directory where the datasets will be synced to
+    destdir: /archive
+
+    # OS user
+    user: mirror
+
+    # OS group
+    group: mirror

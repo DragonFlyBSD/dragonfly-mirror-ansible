@@ -1,3 +1,5 @@
+# -*- mode: yaml; -*-
+
 ---
 # file: roles/mirror/handlers/main.yml
 

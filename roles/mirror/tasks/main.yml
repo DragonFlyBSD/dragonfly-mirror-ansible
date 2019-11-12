@@ -1,3 +1,5 @@
+# -*- mode: yaml; -*-
+
 ---
 # file: roles/mirror/tasks/main.yml
 
@@ -13,7 +15,7 @@
 
 - name: create user 'mirror'
   user:
-    name: "{{ mirror_dfly_user }}"
+    name: "{{ mirror.user }}"
     uid: 9001
     shell: /bin/tcsh
     createhome: yes
@@ -22,29 +24,29 @@
 
 - name: create group 'mirror'
   group:
-    name: "{{ mirror_dfly_group }}"
+    name: "{{ mirror.group }}"
     gid: 9001
     state: present
 
 - name: install sync script
   template:
     src: rsync_mirror.sh.j2
-    dest: "/home/{{ mirror_dfly_user }}/bin/rsync_mirror.sh"
-    owner: "{{ mirror_dfly_user }}"
-    group: "{{ mirror_dfly_group }}"
+    dest: "/home/{{ mirror.user }}/bin/rsync_mirror.sh"
+    owner: "{{ mirror.user }}"
+    group: "{{ mirror.group }}"
     mode: 0755
   tags: script
 
 - name: mirroring logs directory
   file:
     path: /var/log/mirrorlog
-    owner: "{{ mirror_dfly_user }}"
-    group: "{{ mirror_dfly_group }}"
+    owner: "{{ mirror.user }}"
+    group: "{{ mirror.group }}"
     state: directory
     recurse: yes
 
 - name: gather source datasets
-  command: "rsync rsync://{{ mirror_dfly_masterhost}}"
+  command: "rsync rsync://{{ mirror.masterhost}}"
   register: rsync_datasets
   tags: targetdir,rsyncd
 
@@ -61,7 +63,7 @@
 # the specified directories
 - name: target directories creation and permissions
   file:
-    path: "{{ mirror_dfly_destdir }}/{{ item.split()[0].strip() }}"
+    path: "{{ mirror.destdir }}/{{ item.split()[0].strip() }}"
     owner: mirror
     group: mirror
     state: directory
@@ -108,11 +110,11 @@
 #
 - name: verify certificate files are in place
   fail:
-    msg: "{{ item._ansible_item_label }} is NOT in place"
+    msg: "{{ item }} is NOT in place"
   when: not item.stat.exists
   with_items: "{{ r.results }}"
   loop_control:
-    label: "{{ item._ansible_item_label }} is in place"
+    label: "{{ item }} is in place"
   tags: webserver
 
 - name: newsyslog service
@@ -142,16 +144,16 @@
 - name: Cron entry for the mirroring script
   cron:
     name: "mirror sync script"
-    user: "{{ mirror_dfly_user}}"
+    user: "{{ mirror.user}}"
     minute: "1"
     hour: "*"
-    job: "/usr/bin/lockf -kst 0 /tmp/.mirror /home/{{ mirror_dfly_user}}/bin/rsync_mirror.sh"
+    job: "/usr/bin/lockf -kst 0 /tmp/.mirror /home/{{ mirror.user}}/bin/rsync_mirror.sh"
   tags: cronjob
 
 - name: Cron for visitors stats
   cron:
     name: "visitors stats update"
-    user: "{{ mirror_dfly_user}}"
+    user: "{{ mirror.user}}"
     minute: "05"
     hour: "*"
     job: "/usr/bin/lockf -kst 0 /tmp/.visitors visitors -A -m 30 /var/log/nginx/access.log -o html > /archive/webreports/index.html"
